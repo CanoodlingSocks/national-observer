@@ -1,8 +1,9 @@
 import { Link, useParams } from 'react-router-dom'
 import { authorName, formatDate } from '../model'
 import { usePaper } from '../paper-context'
+import { portraitAlt } from '../portrait'
 import { useTitle } from '../useTitle'
-import { Prose } from './Prose'
+import { Prose, StoredImage } from './Prose'
 
 export function ArticlePage() {
   const { id } = useParams()
@@ -38,8 +39,19 @@ export function ArticlePage() {
       <Prose html={article.bodyHtml} />
       <section className="author-note" aria-labelledby="author-note-title">
         <h2 id="author-note-title">About the author</h2>
-        <p className="author-note-name">{author?.name.trim() || 'An unnamed correspondent'}</p>
-        <p className="author-bio">{author?.bio.trim() || 'No biography is on file.'}</p>
+        <div className={author?.portraitId ? 'author-card has-portrait' : 'author-card'}>
+          {author?.portraitId ? (
+            <StoredImage
+              id={author.portraitId}
+              alt={portraitAlt(author.name)}
+              className="author-portrait"
+            />
+          ) : null}
+          <div className="author-copy">
+            <p className="author-note-name">{author?.name.trim() || 'An unnamed correspondent'}</p>
+            <p className="author-bio">{author?.bio.trim() || 'No biography is on file.'}</p>
+          </div>
+        </div>
       </section>
     </article>
   )

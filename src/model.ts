@@ -21,6 +21,7 @@ export type Author = {
   id: string
   name: string
   bio: string
+  portraitId: string | null
 }
 
 export type FieldErrors = Record<string, string>

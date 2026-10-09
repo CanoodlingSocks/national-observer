@@ -92,7 +92,7 @@ export function Desk() {
         />
       </div>
       <p className="hint">
-        Download published edition writes edition.json for the public site. It leaves drafts and the rest of this browser’s paper alone.
+        Downloading an edition does not update the public website. It writes edition.json on your computer and leaves this browser’s paper alone. Replace public/edition.json, then push that file to main.
       </p>
       {error ? (
         <p role="alert" className="field-error">

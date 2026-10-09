@@ -71,5 +71,6 @@ describe('sanitize and backup', () => {
     if (!parsed.ok) return
     expect(parsed.backup.articles[0]?.featuredOrder).toBe(3)
     expect(parsed.backup.authors[0]?.name).toBe('Ada')
+    expect(parsed.backup.authors[0]?.portraitId).toBeNull()
   })
 })

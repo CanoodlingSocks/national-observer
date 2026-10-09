@@ -6,8 +6,8 @@ function piece(patch: Partial<Article>): Article {
   return { ...blankArticle(patch.id ?? 'piece'), ...patch }
 }
 
-const ada: Author = { id: 'ada', name: 'Ada', bio: 'Files the late copy.' }
-const bo: Author = { id: 'bo', name: 'Bo', bio: 'Still in the drawer.' }
+const ada: Author = { id: 'ada', name: 'Ada', bio: 'Files the late copy.', portraitId: 'ada-face' }
+const bo: Author = { id: 'bo', name: 'Bo', bio: 'Still in the drawer.', portraitId: 'bo-face' }
 
 describe('published edition', () => {
   it('keeps published articles, their authors, images, tags, and front-page order', () => {
@@ -45,7 +45,15 @@ describe('published edition', () => {
         bodyHtml: '<p>Filed late.</p>',
       }),
     ]
-    const images = [{ id: 'draft-thumb' }, { id: 'draft-body' }, { id: 'lead-thumb' }, { id: 'lead-body' }, { id: 'unused' }]
+    const images = [
+      { id: 'draft-thumb' },
+      { id: 'draft-body' },
+      { id: 'lead-thumb' },
+      { id: 'lead-body' },
+      { id: 'ada-face' },
+      { id: 'bo-face' },
+      { id: 'unused' },
+    ]
     const edition = selectPublished({ articles, authors: [ada, bo], images })
 
     expect(edition.articles.map((article) => article.id)).toEqual(['lead', 'row'])
@@ -53,9 +61,9 @@ describe('published edition', () => {
     expect(edition.articles[0]?.tags).toEqual(['County', 'Water'])
     expect(edition.articles[0]?.bodyHtml).toContain('<strong>serious</strong>')
     expect(edition.authors).toEqual([ada])
-    expect(edition.images.map((image) => image.id)).toEqual(['lead-thumb', 'lead-body'])
+    expect(edition.images.map((image) => image.id)).toEqual(['lead-thumb', 'lead-body', 'ada-face'])
     expect(articles).toHaveLength(3)
-    expect(images).toHaveLength(5)
+    expect(images).toHaveLength(7)
   })
 
   it('is empty when nothing has been published', () => {

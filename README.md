@@ -23,9 +23,9 @@ Pieces live in this browser while you are writing. Drafts stay off the paper. A 
 
 **Export backup** downloads everything in this browser: drafts, published pieces, authors, and images. **Import backup** replaces that local copy after you confirm. Use this when you want a private safety copy.
 
-**Download published edition** downloads `edition.json` with only published pieces, the authors and images those pieces use, their tags, and their front-page order. It does not change anything stored in the browser.
+**Download published edition** downloads `edition.json` with only published pieces, the authors those pieces use (including a portrait, when one is saved), the images those pieces use, their tags, and their front-page order. It does not change anything stored in the browser, and it does not update the public website.
 
-To put that edition on the public site, replace `public/edition.json` with the file you downloaded, commit it, and update `main`. If nothing is published, the file is empty and the site still says that no dispatches have been published.
+If nothing is published, the file is empty and the site still says that no dispatches have been published.
 
 The production build does not include the desk. Local development does.
 
@@ -37,6 +37,28 @@ The repository name this build expects is `national-observer`, so the public add
 
 `.github/workflows/pages.yml` builds and deploys when `main` is updated. In the GitHub repository settings, set Pages to deploy with GitHub Actions. The first time, GitHub may ask you to allow the workflow.
 
-Day to day, write on a `dev` branch. When an edition is ready, put the new `public/edition.json` on `main`. That push is what updates the live paper.
+Day to day, write on the `dev` branch. The live site updates only when `main` is pushed. The address is [https://canoodlingsocks.github.io/national-observer/](https://canoodlingsocks.github.io/national-observer/).
 
-Creating the GitHub repository, pushing, and turning Pages on are manual steps. This folder does not do them by itself.
+## Publishing a new edition
+
+Publishing a piece in The Desk updates this browser. It does not change GitHub Pages. The public site reads `public/edition.json` from `main`.
+
+1. On `dev`, run `npm run dev`. In The Desk, save the author (a portrait is optional), write the piece, and choose **Publish**.
+2. On the desk, choose **Download published edition**. That saves `edition.json` on your computer.
+3. Replace `public/edition.json` in this project with that file.
+4. Commit it on `dev`, merge into `main`, and push `main`:
+
+```bash
+git add public/edition.json
+git commit -m "Publish the latest edition."
+git checkout main
+git merge dev
+git push origin main
+git checkout dev
+```
+
+5. Wait for the **Deploy GitHub Pages** workflow on `main`. Then open the live site and the article.
+
+`.github/workflows/pages.yml` runs on a push to `main`. A commit that stays on `dev` does not deploy. Drafts, and authors who have no published piece, stay out of `edition.json`.
+
+To change a piece that is already on the site, or to add another one, edit and publish it in The Desk, download a new edition, and repeat steps 3–5. Each download is the whole published paper, so the new `public/edition.json` replaces the previous one.

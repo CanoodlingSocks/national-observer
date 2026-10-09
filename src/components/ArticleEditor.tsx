@@ -106,7 +106,7 @@ export function ArticleEditor() {
       document.getElementById('inline-author-name')?.focus()
       return
     }
-    const author = { id: crypto.randomUUID(), name: newAuthorName.trim(), bio: newAuthorBio.trim() }
+    const author = { id: crypto.randomUUID(), name: newAuthorName.trim(), bio: newAuthorBio.trim(), portraitId: null }
     try {
       await saveAuthor(author)
     } catch {

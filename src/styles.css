@@ -402,6 +402,35 @@ a {
   font-size: var(--text-lg);
 }
 
+.author-card {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.author-card.has-portrait {
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  column-gap: var(--space-md);
+  align-items: start;
+}
+
+.author-copy {
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.author-portrait,
+.portrait-preview {
+  width: 6.5rem;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.portrait-preview {
+  width: 4.5rem;
+}
+
 .author-note-name {
   font-weight: 600;
 }

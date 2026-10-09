@@ -56,7 +56,15 @@ function isArticle(value: unknown): value is Article {
 
 function isAuthor(value: unknown): value is Author {
   if (!isRecord(value)) return false
-  return typeof value.id === 'string' && value.id.length > 0 && typeof value.name === 'string' && typeof value.bio === 'string'
+  const portrait = value.portraitId
+  const portraitOk = portrait === undefined || portrait === null || typeof portrait === 'string'
+  return (
+    typeof value.id === 'string' &&
+    value.id.length > 0 &&
+    typeof value.name === 'string' &&
+    typeof value.bio === 'string' &&
+    portraitOk
+  )
 }
 
 function isBackupImage(value: unknown): value is BackupImage {
@@ -122,7 +130,7 @@ export function parseBackup(raw: string): { ok: true; backup: Backup } | { ok: f
     backup: {
       version: 1,
       articles: parsed.articles.map((article) => ({ ...article, bodyHtml: sanitize(article.bodyHtml) })),
-      authors: parsed.authors,
+      authors: parsed.authors.map((author) => ({ ...author, portraitId: author.portraitId ?? null })),
       images: parsed.images,
       settings,
     },

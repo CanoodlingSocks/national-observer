@@ -20,6 +20,14 @@ import {
 } from './db'
 import { imageIdsForArticle, moveFeatured, type Article, type Author } from './model'
 
+function usedImageIds(articles: Article[], authors: Author[]) {
+  const ids = new Set(articles.flatMap((article) => imageIdsForArticle(article)))
+  for (const author of authors) {
+    if (author.portraitId) ids.add(author.portraitId)
+  }
+  return ids
+}
+
 function downloadJson(filename: string, value: unknown) {
   const blob = new Blob([JSON.stringify(value)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -37,6 +45,7 @@ export function PaperProvider({ children }: PaperChildren) {
   const [authors, setAuthors] = useState<Author[]>([])
   const [urls, setUrls] = useState<Urls>({})
   const articlesRef = useRef<Article[]>([])
+  const authorsRef = useRef<Author[]>([])
   const urlsRef = useRef<Urls>({})
   const pending = useRef(new Set<string>())
 
@@ -69,6 +78,7 @@ export function PaperProvider({ children }: PaperChildren) {
       .then(([storedArticles, storedAuthors]) => {
         if (cancelled) return
         articlesRef.current = storedArticles
+        authorsRef.current = storedAuthors
         setArticles(storedArticles)
         setAuthors(storedAuthors)
         setReady(true)
@@ -115,7 +125,7 @@ export function PaperProvider({ children }: PaperChildren) {
     setArticles(next)
     const previousIds = previous ? imageIdsForArticle(previous) : []
     const kept = new Set(imageIdsForArticle(article))
-    const stillUsed = new Set(next.flatMap((item) => imageIdsForArticle(item)))
+    const stillUsed = usedImageIds(next, authorsRef.current)
     for (const id of previousIds) {
       if (!kept.has(id) && !stillUsed.has(id)) {
         await deleteImage(id)
@@ -131,7 +141,7 @@ export function PaperProvider({ children }: PaperChildren) {
     articlesRef.current = next
     setArticles(next)
     if (!current) return
-    const stillUsed = new Set(next.flatMap((item) => imageIdsForArticle(item)))
+    const stillUsed = usedImageIds(next, authorsRef.current)
     for (const imageId of imageIdsForArticle(current)) {
       if (!stillUsed.has(imageId)) {
         await deleteImage(imageId)
@@ -141,19 +151,34 @@ export function PaperProvider({ children }: PaperChildren) {
   }, [forgetUrls])
 
   const saveAuthor = useCallback(async (author: Author) => {
+    const previous = authorsRef.current.find((item) => item.id === author.id)
     await putAuthor(author)
-    setAuthors((current) => {
-      const exists = current.some((item) => item.id === author.id)
-      return exists ? current.map((item) => (item.id === author.id ? author : item)) : [...current, author]
-    })
-  }, [])
+    const next = previous
+      ? authorsRef.current.map((item) => (item.id === author.id ? author : item))
+      : [...authorsRef.current, author]
+    authorsRef.current = next
+    setAuthors(next)
+    const oldPortrait = previous?.portraitId
+    if (oldPortrait && oldPortrait !== author.portraitId && !usedImageIds(articlesRef.current, next).has(oldPortrait)) {
+      await deleteImage(oldPortrait)
+      forgetUrls([oldPortrait])
+    }
+  }, [forgetUrls])
 
   const removeAuthor = useCallback(async (id: string) => {
     const linked = articlesRef.current.some((article) => article.authorId === id)
     if (linked) throw new Error('This author is still linked to a piece.')
+    const current = authorsRef.current.find((author) => author.id === id)
     await deleteAuthorRecord(id)
-    setAuthors((current) => current.filter((author) => author.id !== id))
-  }, [])
+    const next = authorsRef.current.filter((author) => author.id !== id)
+    authorsRef.current = next
+    setAuthors(next)
+    const portraitId = current?.portraitId
+    if (portraitId && !usedImageIds(articlesRef.current, next).has(portraitId)) {
+      await deleteImage(portraitId)
+      forgetUrls([portraitId])
+    }
+  }, [forgetUrls])
 
   const saveImage = useCallback(async (image: ImageRecord) => {
     try {
@@ -208,6 +233,7 @@ export function PaperProvider({ children }: PaperChildren) {
     })
     clearUrls()
     articlesRef.current = backup.articles
+    authorsRef.current = backup.authors
     setArticles(backup.articles)
     setAuthors(backup.authors)
   }, [clearUrls])
