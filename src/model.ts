@@ -1,4 +1,6 @@
-export type ArticleStatus = 'draft' | 'published'
+export type ArticleStatus = 'draft' | 'ready' | 'published'
+
+export type SaveIntent = 'draft' | 'ready' | 'publish' | 'revert'
 
 export type Article = {
   id: string
@@ -68,9 +70,30 @@ export function parseTags(input: string): string[] {
 export function draftErrors(article: Pick<Article, 'title'>): FieldErrors {
   const errors: FieldErrors = {}
   if (!article.title.trim()) {
-    errors.title = 'Give the piece a headline before saving.'
+    errors.title = 'Give the piece a headline before marking it ready or publishing.'
   }
   return errors
+}
+
+export function statusForSave(intent: SaveIntent): ArticleStatus {
+  if (intent === 'publish') return 'published'
+  if (intent === 'ready') return 'ready'
+  return 'draft'
+}
+
+export function errorsForSave(intent: SaveIntent, article: Parameters<typeof publishErrors>[0]): FieldErrors {
+  if (intent === 'draft' || intent === 'revert') return {}
+  return publishErrors(article)
+}
+
+export function statusLabel(status: ArticleStatus): string {
+  if (status === 'published') return 'Published'
+  if (status === 'ready') return 'Ready'
+  return 'Draft'
+}
+
+export function pieceTitle(article: Pick<Article, 'title'>): string {
+  return article.title.trim() || 'Untitled draft'
 }
 
 export function publishErrors(article: Pick<Article, 'title' | 'authorId' | 'date' | 'featured' | 'description'>): FieldErrors {
@@ -82,7 +105,7 @@ export function publishErrors(article: Pick<Article, 'title' | 'authorId' | 'dat
     errors.date = 'Choose the date this piece was written.'
   }
   if (article.featured && !article.description.trim()) {
-    errors.description = 'A featured piece needs a description before it can be published.'
+    errors.description = 'A featured piece needs a description before it can be marked ready or published.'
   }
   return errors
 }
@@ -102,6 +125,16 @@ export function formatDate(iso: string): string {
   if (!year || !month || !day) return iso
   const date = new Date(year, month - 1, day)
   if (Number.isNaN(date.getTime())) return iso
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date)
+}
+
+export function formatEdited(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
   return new Intl.DateTimeFormat('en-GB', {
     day: 'numeric',
     month: 'long',

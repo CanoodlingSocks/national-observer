@@ -31,7 +31,7 @@ export function ArticlePage() {
         <h1 className="article-title">{article.title}</h1>
         {article.subtitle ? <p className="dek">{article.subtitle}</p> : null}
         <p className="byline">
-          By {authorName(authors, article.authorId)}
+          By <span className="byline-name">{authorName(authors, article.authorId)}</span>
           {' · '}
           <time dateTime={article.date}>{formatDate(article.date)}</time>
         </p>

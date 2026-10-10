@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { parseBackup } from '../src/backup'
-import { blankArticle, excerpt, moveFeatured, paperSelection, publishErrors, type Article } from '../src/model'
+import { blankArticle, errorsForSave, excerpt, moveFeatured, paperSelection, publishErrors, statusForSave, type Article } from '../src/model'
 import { sanitize } from '../src/sanitize'
 
 function piece(patch: Partial<Article>): Article {
@@ -18,6 +18,22 @@ describe('publish rules', () => {
     expect(errors.description).toBeUndefined()
     expect(errors).toEqual({})
   })
+
+  it('saves an unfinished draft without a headline or featured description', () => {
+    const article = piece({ title: '  ', authorId: '', date: '', featured: true, description: '' })
+    expect(errorsForSave('draft', article)).toEqual({})
+    expect(statusForSave('draft')).toBe('draft')
+    expect(errorsForSave('revert', article)).toEqual({})
+    expect(statusForSave('revert')).toBe('draft')
+  })
+
+  it('requires a finished piece before it can be marked ready', () => {
+    const errors = errorsForSave('ready', piece({ title: 'Frogs', authorId: '', date: '2026-10-09', featured: true, description: '' }))
+    expect(errors.authorId).toMatch(/author/)
+    expect(errors.description).toMatch(/description/)
+    expect(statusForSave('ready')).toBe('ready')
+    expect(statusForSave('publish')).toBe('published')
+  })
 })
 
 describe('front page order', () => {
@@ -32,9 +48,13 @@ describe('front page order', () => {
     expect(paperSelection(moved, null).rows.map((article) => article.id)).toEqual(['c'])
   })
 
-  it('hides drafts from the paper', () => {
-    const articles = [piece({ id: 'a', title: 'A', status: 'draft', featured: true, featuredOrder: 0 })]
+  it('hides drafts and ready pieces from the paper', () => {
+    const articles = [
+      piece({ id: 'a', title: 'A', status: 'draft', featured: true, featuredOrder: 0 }),
+      piece({ id: 'b', title: 'B', status: 'ready', featured: true, featuredOrder: 1 }),
+    ]
     expect(paperSelection(articles, null).featured).toEqual([])
+    expect(paperSelection(articles, null).rows).toEqual([])
   })
 })
 
@@ -72,5 +92,23 @@ describe('sanitize and backup', () => {
     expect(parsed.backup.articles[0]?.featuredOrder).toBe(3)
     expect(parsed.backup.authors[0]?.name).toBe('Ada')
     expect(parsed.backup.authors[0]?.portraitId).toBeNull()
+  })
+
+  it('keeps a ready piece in a backup and rejects an unknown status', () => {
+    const ready = JSON.stringify({
+      version: 1,
+      articles: [piece({ id: 'soon', title: 'Soon', status: 'ready', bodyHtml: '<p>Hold</p>' })],
+      authors: [],
+      images: [],
+      settings: { paper: 'The National Observer' },
+    })
+    const parsed = parseBackup(ready)
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    expect(parsed.backup.articles[0]?.status).toBe('ready')
+    expect(parsed.backup.articles[0]?.bodyHtml).toBe('<p>Hold</p>')
+
+    const unknown = ready.replace('"ready"', '"scheduled"')
+    expect(parseBackup(unknown).ok).toBe(false)
   })
 })

@@ -87,7 +87,9 @@ export function Magazine() {
                       <h3 className="story-title">
                         <Link to={`/article/${article.id}`}>{article.title}</Link>
                       </h3>
-                      <p className="byline">{authorName(authors, article.authorId)}</p>
+                      <p className="byline">
+                        <span className="byline-name">{authorName(authors, article.authorId)}</span>
+                      </p>
                       {excerpt(article.bodyHtml) ? <p className="preview">{excerpt(article.bodyHtml)}</p> : null}
                       <p className="more">
                         <Link className="read-more" to={`/article/${article.id}`}>
@@ -113,7 +115,9 @@ function FeaturedStory({ article, lead, author }: { article: Article; lead: bool
         <h3 className={lead ? 'story-title lead-title' : 'story-title'}>
           <Link to={`/article/${article.id}`}>{article.title}</Link>
         </h3>
-        <p className="byline">{author}</p>
+        <p className="byline">
+          <span className="byline-name">{author}</span>
+        </p>
         {article.description ? <p className="dek">{article.description}</p> : null}
         <p className="more">
           <Link className="read-more" to={`/article/${article.id}`}>

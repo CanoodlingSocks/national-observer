@@ -1,5 +1,13 @@
 import { imageIdsForArticle, type Article, type Author } from './model'
 
+export function shouldCopyEditionIntoBrowser(input: {
+  articleCount: number
+  authorCount: number
+  started: boolean
+}): boolean {
+  return !input.started && input.articleCount === 0 && input.authorCount === 0
+}
+
 export function selectPublished<T extends { id: string }>(input: {
   articles: Article[]
   authors: Author[]

@@ -47,7 +47,7 @@ function isArticle(value: unknown): value is Article {
     typeof value.description === 'string' &&
     typeof value.featured === 'boolean' &&
     typeof value.featuredOrder === 'number' &&
-    (value.status === 'draft' || value.status === 'published') &&
+    (value.status === 'draft' || value.status === 'ready' || value.status === 'published') &&
     Array.isArray(value.tags) &&
     value.tags.every((tag) => typeof tag === 'string') &&
     typeof value.updatedAt === 'string'

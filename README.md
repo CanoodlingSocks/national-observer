@@ -19,7 +19,7 @@ Open the address Vite prints. **The desk** is where you write. **The paper** is 
 
 ## Writing, backups, and the public edition
 
-Pieces live in this browser while you are writing. Drafts stay off the paper. A featured piece needs a short description before it can be published. Front-page order is the Move earlier / Move later list on the desk.
+Pieces live in this browser while you are writing. The first time The Desk opens in an empty browser, it copies `public/edition.json` into that browser so an existing piece can be edited or deleted. After that, this browser keeps its own copy: a deletion stays deleted, and `edition.json` changes only when you download a new edition and replace the file. **Save draft** keeps an unfinished piece, even without a headline. **Mark ready** means it is finished but still off the paper. **Publish** puts it on this browser’s paper only. A featured piece needs a short description before it can be marked ready or published. Front-page order is the Move earlier / Move later list on the desk.
 
 **Export backup** downloads everything in this browser: drafts, published pieces, authors, and images. **Import backup** replaces that local copy after you confirm. Use this when you want a private safety copy.
 
@@ -59,6 +59,6 @@ git checkout dev
 
 5. Wait for the **Deploy GitHub Pages** workflow on `main`. Then open the live site and the article.
 
-`.github/workflows/pages.yml` runs on a push to `main`. A commit that stays on `dev` does not deploy. Drafts, and authors who have no published piece, stay out of `edition.json`.
+`.github/workflows/pages.yml` runs on a push to `main`. A commit that stays on `dev` does not deploy. Drafts, pieces marked ready, and authors who have no published piece stay out of `edition.json`.
 
 To change a piece that is already on the site, or to add another one, edit and publish it in The Desk, download a new edition, and repeat steps 3–5. Each download is the whole published paper, so the new `public/edition.json` replaces the previous one.

@@ -317,6 +317,10 @@ a {
   color: var(--color-muted);
 }
 
+.byline-name {
+  font-style: italic;
+}
+
 .dek,
 .preview,
 .author-bio,
@@ -433,6 +437,7 @@ a {
 
 .author-note-name {
   font-weight: 600;
+  font-style: italic;
 }
 
 .prose {

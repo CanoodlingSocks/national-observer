@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { buildBackup, imagesFromBackup, type Backup, type ImageRecord } from './backup'
-import { selectPublished } from './edition'
+import { buildBackup, imagesFromBackup, parseBackup, type Backup, type ImageRecord } from './backup'
+import { selectPublished, shouldCopyEditionIntoBrowser } from './edition'
 import { PaperContext, type PaperChildren, type PaperContextValue, type Urls } from './paper-context'
 import {
   QUOTA_MESSAGE,
@@ -11,14 +11,24 @@ import {
   getAuthors,
   getImage,
   getImages,
+  getPaperStarted,
   isQuotaError,
   putArticle,
   putArticles,
   putAuthor,
   putImage,
   replacePaper,
+  setPaperStarted,
 } from './db'
 import { imageIdsForArticle, moveFeatured, type Article, type Author } from './model'
+
+async function readEdition(): Promise<Backup | null> {
+  const response = await fetch(`${import.meta.env.BASE_URL}edition.json`)
+  if (!response.ok) return null
+  const parsed = parseBackup(await response.text())
+  if (!parsed.ok) return null
+  return parsed.backup
+}
 
 function usedImageIds(articles: Article[], authors: Author[]) {
   const ids = new Set(articles.flatMap((article) => imageIdsForArticle(article)))
@@ -74,18 +84,46 @@ export function PaperProvider({ children }: PaperChildren) {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([getArticles(), getAuthors()])
-      .then(([storedArticles, storedAuthors]) => {
+    async function load() {
+      const [storedArticles, storedAuthors, started] = await Promise.all([
+        getArticles(),
+        getAuthors(),
+        getPaperStarted(),
+      ])
+      if (cancelled) return
+      let nextArticles = storedArticles
+      let nextAuthors = storedAuthors
+      if (shouldCopyEditionIntoBrowser({
+        articleCount: storedArticles.length,
+        authorCount: storedAuthors.length,
+        started,
+      })) {
+        const edition = await readEdition()
         if (cancelled) return
-        articlesRef.current = storedArticles
-        authorsRef.current = storedAuthors
-        setArticles(storedArticles)
-        setAuthors(storedAuthors)
-        setReady(true)
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError('This browser blocked local storage. The paper cannot be saved here.')
-      })
+        if (edition) {
+          await replacePaper({
+            articles: edition.articles,
+            authors: edition.authors,
+            images: imagesFromBackup(edition.images),
+            settings: edition.settings,
+          })
+          await setPaperStarted()
+          nextArticles = edition.articles
+          nextAuthors = edition.authors
+        }
+      } else if (!started) {
+        await setPaperStarted()
+      }
+      if (cancelled) return
+      articlesRef.current = nextArticles
+      authorsRef.current = nextAuthors
+      setArticles(nextArticles)
+      setAuthors(nextAuthors)
+      setReady(true)
+    }
+    load().catch(() => {
+      if (!cancelled) setLoadError('This browser blocked local storage. The paper cannot be saved here.')
+    })
     return () => {
       cancelled = true
     }
@@ -231,6 +269,7 @@ export function PaperProvider({ children }: PaperChildren) {
       images: imagesFromBackup(backup.images),
       settings: backup.settings,
     })
+    await setPaperStarted()
     clearUrls()
     articlesRef.current = backup.articles
     authorsRef.current = backup.authors

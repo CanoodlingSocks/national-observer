@@ -5,7 +5,7 @@ const DB_NAME = 'national-observer'
 const DB_VERSION = 1
 
 type StoreName = 'articles' | 'authors' | 'images' | 'meta'
-type MetaRecord = { key: 'settings'; value: Settings }
+type MetaRecord = { key: 'settings'; value: Settings } | { key: 'paperStarted'; value: true }
 
 let dbPromise: Promise<IDBDatabase> | null = null
 
@@ -41,6 +41,17 @@ function run<T>(name: StoreName, mode: IDBTransactionMode, fn: (store: IDBObject
         tx.onabort = () => reject(tx.error)
       }),
   )
+}
+
+export function getPaperStarted(): Promise<boolean> {
+  return run<MetaRecord | undefined>('meta', 'readonly', (store) => store.get('paperStarted')).then(
+    (record) => record?.key === 'paperStarted' && record.value === true,
+  )
+}
+
+export function setPaperStarted(): Promise<void> {
+  const record: MetaRecord = { key: 'paperStarted', value: true }
+  return run('meta', 'readwrite', (store) => store.put(record)).then(() => undefined)
 }
 
 export function getArticles(): Promise<Article[]> {

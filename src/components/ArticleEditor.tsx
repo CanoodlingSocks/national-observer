@@ -3,12 +3,13 @@ import { Link, useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { QUOTA_MESSAGE, isQuotaError } from '../db'
 import {
   blankArticle,
-  draftErrors,
+  errorsForSave,
   nextFeaturedOrder,
   parseTags,
-  publishErrors,
+  statusForSave,
   type Article,
   type FieldErrors,
+  type SaveIntent,
 } from '../model'
 import { usePaper } from '../paper'
 import { sanitize } from '../sanitize'
@@ -19,13 +20,13 @@ import { RichText } from './RichText'
 export function ArticleEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { articles, authors, saveArticle, saveAuthor, saveImage } = usePaper()
+  const { ready, articles, authors, saveArticle, saveAuthor, saveImage } = usePaper()
   const [draft, setDraft] = useState<Article | null>(null)
   const [tagText, setTagText] = useState('')
   const [errors, setErrors] = useState<FieldErrors>({})
   const [status, setStatus] = useState('')
   const [formError, setFormError] = useState('')
-  const [saving, setSaving] = useState<'draft' | 'publish' | 'revert' | null>(null)
+  const [saving, setSaving] = useState<SaveIntent | null>(null)
   const [addingAuthor, setAddingAuthor] = useState(false)
   const [newAuthorName, setNewAuthorName] = useState('')
   const [newAuthorBio, setNewAuthorBio] = useState('')
@@ -42,7 +43,7 @@ export function ArticleEditor() {
   useTitle(draft?.title.trim() ? `${draft.title.trim()} — The desk` : 'New piece — The National Observer')
 
   useEffect(() => {
-    if (!id || seeded.current === id) return
+    if (!ready || !id || seeded.current === id) return
     seeded.current = id
     const existing = articles.find((item) => item.id === id) ?? blankArticle(id)
     const tags = existing.tags.join(', ')
@@ -53,7 +54,7 @@ export function ArticleEditor() {
     setErrors({})
     setStatus('')
     setFormError('')
-  }, [id, articles])
+  }, [ready, id, articles])
 
   const blocker = useBlocker(() => {
     if (allowLeave.current || !draftRef.current) return false
@@ -93,7 +94,7 @@ export function ArticleEditor() {
   }
 
   const stored = articles.find((item) => item.id === draft.id)
-  const published = stored?.status === 'published' || draft.status === 'published'
+  const canRevert = draft.status === 'ready' || draft.status === 'published'
 
   function update(patch: Partial<Article>) {
     setDraft((current) => (current ? { ...current, ...patch } : current))
@@ -131,7 +132,7 @@ export function ArticleEditor() {
     update({ thumbnailId: imageId })
   }
 
-  async function persist(intent: 'draft' | 'publish' | 'revert') {
+  async function persist(intent: SaveIntent) {
     if (!draft) return
     const featuredOrder = draft.featured
       ? stored?.featured
@@ -146,14 +147,18 @@ export function ArticleEditor() {
       thumbnailAlt: draft.thumbnailAlt.trim(),
       tags: parseTags(tagText),
       bodyHtml: sanitize(draft.bodyHtml),
-      status: intent === 'publish' ? 'published' : 'draft',
+      status: statusForSave(intent),
       featuredOrder,
       updatedAt: new Date().toISOString(),
     }
-    const nextErrors = intent === 'publish' ? publishErrors(article) : draftErrors(article)
+    const nextErrors = errorsForSave(intent, article)
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
-      setFormError(intent === 'publish' ? 'The piece cannot be published yet.' : 'The piece cannot be saved yet.')
+      setFormError(
+        intent === 'publish'
+          ? 'The piece cannot be published yet.'
+          : 'The piece cannot be marked ready yet.',
+      )
       setStatus('')
       const first = Object.keys(nextErrors)[0]
       document.getElementById(first)?.focus()
@@ -172,7 +177,13 @@ export function ArticleEditor() {
         navigate(`/article/${article.id}`)
         return
       }
-      setStatus(intent === 'revert' ? 'Returned to draft. It is off the paper.' : 'Saved as a draft.')
+      setStatus(
+        intent === 'revert'
+          ? 'Returned to draft. It is off the paper.'
+          : intent === 'ready'
+            ? 'Marked ready. It stays off the paper until you publish it.'
+            : 'Saved as a draft.',
+      )
     } catch (error) {
       setFormError(error instanceof Error ? error.message : 'The piece could not be saved.')
     } finally {
@@ -182,7 +193,8 @@ export function ArticleEditor() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const intent = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'publish' ? 'publish' : 'draft'
+    const value = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value')
+    const intent: SaveIntent = value === 'publish' ? 'publish' : value === 'ready' ? 'ready' : 'draft'
     void persist(intent)
   }
 
@@ -298,7 +310,7 @@ export function ArticleEditor() {
           id="description"
           label="Description"
           error={errors.description}
-          hint="Required to publish a featured piece. Other pieces can omit it."
+          hint="Required to mark a featured piece ready or to publish it. Other pieces can omit it."
         >
           <textarea
             id="description"
@@ -362,10 +374,13 @@ export function ArticleEditor() {
           <button type="submit" className="btn" name="intent" value="draft" disabled={saving !== null} data-state={saving === 'draft' ? 'loading' : undefined}>
             {saving === 'draft' ? 'Saving…' : 'Save draft'}
           </button>
+          <button type="submit" className="btn" name="intent" value="ready" disabled={saving !== null} data-state={saving === 'ready' ? 'loading' : undefined}>
+            {saving === 'ready' ? 'Saving…' : 'Mark ready'}
+          </button>
           <button type="submit" className="btn btn-primary" name="intent" value="publish" disabled={saving !== null} data-state={saving === 'publish' ? 'loading' : undefined}>
             {saving === 'publish' ? 'Publishing…' : 'Publish'}
           </button>
-          {published ? (
+          {canRevert ? (
             <button type="button" className="btn" disabled={saving !== null} onClick={() => void persist('revert')}>
               {saving === 'revert' ? 'Saving…' : 'Return to draft'}
             </button>
