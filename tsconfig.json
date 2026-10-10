@@ -13,9 +13,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
-      "@entry": ["src/main-dev.tsx"]
+      "@entry": ["./src/main-dev.tsx"]
     }
   },
   "include": ["src", "tests"]
