@@ -525,6 +525,7 @@ a {
 }
 
 .prose {
+  display: flow-root;
   font-size: var(--text-md);
   line-height: var(--leading-body);
   overflow-wrap: break-word;
@@ -546,6 +547,17 @@ a {
   padding-inline-start: var(--space-md);
   border-inline-start: var(--rule-slab) solid var(--color-ink);
   font-style: italic;
+}
+
+.reading .prose > p:first-child::first-letter,
+.reading .prose:not(:has(> p:first-child))::first-letter {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-style: normal;
+  float: left;
+  font-size: 4.65em;
+  line-height: 0.78;
+  margin: 0.08em 0.06em -0.04em 0;
 }
 
 .prose img {

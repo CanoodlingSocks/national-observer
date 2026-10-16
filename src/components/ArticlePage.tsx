@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom'
 import { authorName, excerpt, formatDate, thumbnailAlt, type Article } from '../model'
 import { usePaper } from '../paper-context'
-import { portraitAlt } from '../portrait'
+import { portraitAlt, portraitFileUrl } from '../portrait'
 import { useTitle } from '../useTitle'
 import { Prose, StoredImage } from './Prose'
 
@@ -21,6 +21,7 @@ export function ArticlePage() {
   const { articles, authors } = usePaper()
   const article = articles.find((item) => item.id === id && item.status === 'published')
   const author = authors.find((item) => item.id === article?.authorId)
+  const filePortrait = author && !author.portraitId ? portraitFileUrl(author) : null
   const others = article ? alsoInThePaper(articles, article) : []
   useTitle(article ? `${article.title} — The National Observer` : 'Not on the paper — The National Observer')
 
@@ -62,13 +63,15 @@ export function ArticlePage() {
       <Prose html={article.bodyHtml} />
       <section className="author-note" aria-labelledby="author-note-title">
         <h2 id="author-note-title">About the author</h2>
-        <div className={author?.portraitId ? 'author-card has-portrait' : 'author-card'}>
+        <div className={author?.portraitId || filePortrait ? 'author-card has-portrait' : 'author-card'}>
           {author?.portraitId ? (
             <StoredImage
               id={author.portraitId}
               alt={portraitAlt(author.name)}
               className="author-portrait"
             />
+          ) : filePortrait ? (
+            <img className="author-portrait" src={filePortrait} alt={portraitAlt(author?.name ?? '')} />
           ) : null}
           <div className="author-copy">
             <p className="author-note-name">{author?.name.trim() || 'An unnamed correspondent'}</p>
