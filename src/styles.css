@@ -567,6 +567,27 @@ a {
   margin-block: var(--space-lg);
 }
 
+.prose img[data-align='left'],
+.prose img[data-align='right'] {
+  margin-block: 0.2em 0.6em;
+}
+
+.prose img[data-align='left'] {
+  float: left;
+  margin-inline: 0 1em;
+}
+
+.prose img[data-align='right'] {
+  float: right;
+  margin-inline: 1em 0;
+}
+
+.prose img[data-align='center'] {
+  float: none;
+  clear: both;
+  margin-inline: auto;
+}
+
 .prose [data-indent="1"] {
   padding-inline-start: var(--space-lg);
 }
@@ -585,6 +606,14 @@ a {
   gap: var(--space-md);
   width: min(42rem, 100%);
   margin-top: var(--space-lg);
+}
+
+.editor-form {
+  width: min(72rem, 100%);
+}
+
+.editor-form > :not(.rich-text) {
+  max-width: 42rem;
 }
 
 .field,
@@ -752,11 +781,64 @@ select[aria-invalid="true"] {
   }
 }
 
+.editor-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+  max-height: calc(100dvh - var(--sticky-h) - var(--space-2xl));
+}
+
+.editor-column {
+  min-width: 0;
+  min-height: 12rem;
+  overflow: auto;
+  flex: 1;
+}
+
+.editor-toolbar {
+  position: static;
+  z-index: var(--z-raised);
+  background: var(--color-paper);
+  padding-bottom: var(--space-xs);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+}
+
 .editor-surface {
   min-height: 16rem;
   border: var(--rule-slab) solid var(--color-ink);
   padding: var(--space-sm);
   background: var(--color-paper);
+}
+
+.editor-surface img[data-selected='true'] {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.image-settings {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: var(--rule-hair) solid var(--color-rule);
+}
+
+.width-row {
+  display: grid;
+  grid-template-columns: auto minmax(4.5rem, 1fr);
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.width-row input[type='number'] {
+  width: 4.5rem;
+}
+
+.width-row input[type='range'] {
+  width: 100%;
+  padding: 0;
+  accent-color: var(--color-ink);
 }
 
 .editor-surface:focus-visible {
@@ -959,6 +1041,55 @@ dialog p {
 
   .prose [data-indent="3"] {
     padding-inline-start: var(--space-xl);
+  }
+
+  .prose img[data-align='left'],
+  .prose img[data-align='right'],
+  .prose img[data-align='center'] {
+    float: none;
+    clear: both;
+    display: block;
+    width: 100% !important;
+    margin: var(--space-md) 0;
+  }
+}
+
+@media (min-width: 60rem) {
+  .editor-layout {
+    display: grid;
+    grid-template-columns: minmax(0, var(--measure)) 12.5rem;
+    align-items: start;
+    justify-content: start;
+    column-gap: var(--space-md);
+    max-height: none;
+  }
+
+  .editor-column {
+    grid-column: 1;
+    grid-row: 1;
+    overflow: visible;
+    min-height: 0;
+  }
+
+  .editor-toolbar {
+    position: sticky;
+    top: calc(var(--sticky-h) + var(--space-sm));
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    max-height: calc(100dvh - var(--sticky-h) - var(--space-md));
+    overflow: auto;
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .editor-toolbar .toolbar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editor-toolbar .btn {
+    white-space: normal;
   }
 }
 

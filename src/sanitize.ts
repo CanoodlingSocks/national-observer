@@ -34,6 +34,18 @@ function indentLevel(element: HTMLElement): string | null {
   return null
 }
 
+function imageAlign(value: string | null): 'left' | 'right' | 'center' | null {
+  if (value === 'left' || value === 'right' || value === 'center') return value
+  return null
+}
+
+function imageWidth(value: string | null): number | null {
+  if (!value || !/^\d{2,3}$/.test(value)) return null
+  const width = Number(value)
+  if (width < 20 || width > 100) return null
+  return width
+}
+
 function appendClean(parent: HTMLElement, element: HTMLElement, doc: Document) {
   ;[...element.childNodes].flatMap((child) => clean(child, doc)).forEach((child) => parent.appendChild(child))
 }
@@ -78,6 +90,13 @@ function clean(node: Node, doc: Document): Node[] {
     const img = doc.createElement('img')
     img.dataset.imageId = id
     img.alt = element.getAttribute('alt') ?? ''
+    const align = imageAlign(element.dataset.align ?? null)
+    if (align) img.dataset.align = align
+    const width = imageWidth(element.dataset.width ?? null)
+    if (width) {
+      img.dataset.width = String(width)
+      img.style.width = `${width}%`
+    }
     return [img]
   }
 

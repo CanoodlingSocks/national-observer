@@ -70,6 +70,25 @@ describe('excerpt', () => {
 })
 
 describe('sanitize and backup', () => {
+  it('keeps an inline picture’s placement and drops anything else on it', () => {
+    const id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+    const clean = sanitize(
+      `<p>Before <img data-image-id="${id}" alt="Lincoln at his desk" data-align="left" data-width="40" data-selected="true" style="width: 40%; height: 9px" onerror="alert(1)"> after</p>`,
+    )
+    expect(clean).toContain('data-align="left"')
+    expect(clean).toContain('data-width="40"')
+    expect(clean).toContain('width: 40%')
+    expect(clean).toContain('alt="Lincoln at his desk"')
+    expect(clean).not.toContain('onerror')
+    expect(clean).not.toContain('height')
+    expect(clean).not.toContain('data-selected')
+
+    const unsafe = sanitize(`<img data-image-id="${id}" alt="" data-align="evil" data-width="1000" style="width: 1000%">`)
+    expect(unsafe).not.toContain('data-align')
+    expect(unsafe).not.toContain('data-width')
+    expect(unsafe).not.toContain('style')
+  })
+
   it('strips scripts and keeps formatting', () => {
     const clean = sanitize('<p style="text-align: center"><strong>Hold</strong> the line.</p><script>alert(1)</script>')
     expect(clean).toContain('<strong>Hold</strong>')
