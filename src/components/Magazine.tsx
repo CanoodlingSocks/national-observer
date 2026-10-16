@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
-import { authorName, excerpt, paperSelection, thumbnailAlt, type Article } from '../model'
+import { authorName, excerpt, formatDate, paperSelection, thumbnailAlt, type Article } from '../model'
 import { usePaper } from '../paper-context'
 import { useTitle } from '../useTitle'
 import { StoredImage } from './Prose'
@@ -112,11 +112,18 @@ function FeaturedStory({ article, lead, author }: { article: Article; lead: bool
   return (
     <article className={lead ? `lead${article.thumbnailId ? ' has-image' : ''}` : `featured-row${article.thumbnailId ? ' has-image' : ''}`}>
       <div className="story-copy">
+        {lead && article.tags[0] ? <p className="kicker">{article.tags[0]}</p> : null}
         <h3 className={lead ? 'story-title lead-title' : 'story-title'}>
           <Link to={`/article/${article.id}`}>{article.title}</Link>
         </h3>
         <p className="byline">
           <span className="byline-name">{author}</span>
+          {lead ? (
+            <>
+              {' · '}
+              <time dateTime={article.date}>{formatDate(article.date)}</time>
+            </>
+          ) : null}
         </p>
         {article.description ? <p className="dek">{article.description}</p> : null}
         <p className="more">

@@ -2,3 +2,7 @@ node_modules
 dist
 .DS_Store
 *.local
+
+# Local agent notes. Not part of the paper.
+AGENTS.md
+.hallmark/
